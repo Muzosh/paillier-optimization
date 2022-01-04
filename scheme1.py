@@ -92,8 +92,8 @@ class PaillierScheme:
 if __name__ == "__main__":
     ps = PaillierScheme()
 
-    m1 = random.randint(0, ps.public.n - 1)
-    m2 = random.randint(0, ps.public.n - 1)
+    m1 = random.getrandbits(32)
+    m2 = random.getrandbits(32)
 
     ct1 = ps.encrypt(m1)
     ct2 = ps.encrypt(m2)

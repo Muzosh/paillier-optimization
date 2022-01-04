@@ -12,12 +12,12 @@ def Lfunction(u, n):
 
 
 def chinese_remainder(m, a):
-    sum = 0
+    total = 0
     prod = reduce(lambda acc, b: acc * b, m)
     for n_i, a_i in zip(m, a):
         p = prod // n_i
-        sum += a_i * pow(p, -1, n_i) * p
-    return sum % prod
+        total += a_i * pow(p, -1, n_i) * p
+    return total % prod
 
 
 class Public:
@@ -106,8 +106,8 @@ class PaillierScheme:
 if __name__ == "__main__":
     ps = PaillierScheme()
 
-    m1 = random.randint(0, ps.public.n - 1)
-    m2 = random.randint(0, ps.public.n - 1)
+    m1 = random.getrandbits(32)
+    m2 = random.getrandbits(32)
 
     ct1 = ps.encrypt(m1)
     ct2 = ps.encrypt(m2)

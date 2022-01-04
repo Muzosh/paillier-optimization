@@ -15,12 +15,12 @@ def Lfunction(u, n):
 
 
 def chinese_remainder(m, a):
-    sum = 0
+    total = 0
     prod = reduce(lambda acc, b: acc * b, m)
     for n_i, a_i in zip(m, a):
         p = prod // n_i
-        sum += a_i * pow(p, -1, n_i) * p
-    return sum % prod
+        total += a_i * pow(p, -1, n_i) * p
+    return total % prod
 
 
 class Public:
@@ -59,6 +59,7 @@ class PaillierScheme:
 
             self.public = Public(n, g, nsquared)
             self.private = Private(p, q, alpha)
+            self.precomputed_gm = {}
 
             self.precompute_gm(g, nsquared)
             self.saveJson()
@@ -67,7 +68,7 @@ class PaillierScheme:
     def constructFromJsonFile(file_name):
         ps = PaillierScheme(generate=False)
         if file_name is not None:
-            with open("params/" + file_name) as file:
+            with open("params/" + file_name, encoding="ISO-8859-1") as file:
                 data = json.load(file)
                 public = data["public"]
                 private = data["private"]
@@ -104,7 +105,9 @@ class PaillierScheme:
             + ".json"
         )
 
-        with open("params/" + self.file_name, "w") as file:
+        with open(
+            "params/" + self.file_name, "w", encoding="ISO-8859-1"
+        ) as file:
             json.dump(params, file)
 
     def precompute_gm(self, g, nsquared):
@@ -172,7 +175,8 @@ class PaillierScheme:
 
 if __name__ == "__main__":
     ps = PaillierScheme.constructFromJsonFile(
-        "opt1-65882260747573595674415330539362164203477063818498049391976814605010170390900.json"
+        "opt1-65882260747573595674415330539362164"
+        "203477063818498049391976814605010170390900.json"
     )
 
     m1 = random.getrandbits(32)
