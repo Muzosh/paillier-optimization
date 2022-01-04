@@ -1,13 +1,23 @@
-from Cryptodome.Random import random
-from Cryptodome.Util.number import getStrongPrime
-from sympy.ntheory.factor_ import totient
 import math
+from functools import reduce
+
+from Cryptodome.PublicKey import DSA
+from Cryptodome.Random import random
 
 DEFAULT_KEYSIZE = 2048
 
 
 def Lfunction(u, n):
     return (u - 1) // n
+
+
+def chinese_remainder(m, a):
+    sum = 0
+    prod = reduce(lambda acc, b: acc * b, m)
+    for n_i, a_i in zip(m, a):
+        p = prod // n_i
+        sum += a_i * pow(p, -1, n_i) * p
+    return sum % prod
 
 
 class Public:
@@ -24,32 +34,23 @@ class Private:
         self.alpha = alpha
 
 
-class PaillierScheme1:
+class PaillierScheme:
     def __init__(self, n_length=DEFAULT_KEYSIZE) -> None:
-        p = q = n = 0
-        n_len = 0
-        while n_len != n_length:
-            p = getStrongPrime(n_length // 2)
-            q = p
-            while q == p:
-                q = getStrongPrime(n_length // 2)
-            n = p * q
-            n_len = n.bit_length()
+        dsa1 = DSA.generate(n_length // 2)
+        dsa2 = DSA.generate(n_length // 2)
+        assert pow(dsa1.g, dsa1.q * dsa1.p, dsa1.p * dsa1.p) == 1
+        assert pow(dsa2.g, dsa2.q * dsa2.p, dsa2.p * dsa2.p) == 1
 
+        p = dsa1.p
+        q = dsa2.p
+        n = p * q
         nsquared = n * n
         gamma = math.lcm(p - 1, q - 1)
-        # TODO: generation of alpha - DSA twice?
-        alpha = gamma
 
-        # TODO: the order of g is alpha*n
-        g = 0
-        for i in range(2, nsquared):
-            if (
-                math.gcd(i, nsquared) == 1
-                and math.gcd(Lfunction(pow(i, alpha, nsquared), n), n) == 1
-            ):
-                g = i
-                break
+        g = chinese_remainder([p * p, q * q], [dsa1.g, dsa2.g])
+        alpha = dsa1.q * dsa2.q
+
+        assert gamma % alpha == 0
 
         self.public = Public(n, g, nsquared)
         self.private = Private(p, q, alpha)
@@ -63,15 +64,21 @@ class PaillierScheme1:
             if math.gcd(r, self.public.n) == 1:
                 break
 
-        ciphertext = (
+        gm = (
             pow(self.public.g, message, self.public.nsquared)
-            * pow(
+            % self.public.nsquared
+        )
+
+        gnr = (
+            pow(
                 pow(self.public.g, self.public.n, self.public.nsquared),
                 r,
                 self.public.nsquared,
             )
             % self.public.nsquared
         )
+
+        ciphertext = (gm * gnr) % self.public.nsquared
 
         return ciphertext
 
@@ -97,13 +104,21 @@ class PaillierScheme1:
 
 
 if __name__ == "__main__":
-    ps = PaillierScheme1()
-    ct1 = ps.encrypt(3)
-    ct2 = ps.encrypt(11)
+    ps = PaillierScheme()
+
+    m1 = random.randint(0, ps.public.n - 1)
+    m2 = random.randint(0, ps.public.n - 1)
+
+    ct1 = ps.encrypt(m1)
+    ct2 = ps.encrypt(m2)
 
     pt1 = ps.decrypt(ct1)
     pt2 = ps.decrypt(ct2)
 
     pt3 = ps.decrypt(ps.add_two_ciphertexts(ct1, ct2))
 
-    pass
+    assert pt1 == m1
+    assert pt2 == m2
+    assert pt1 + pt2 == pt3
+
+    print("Finished successfully")

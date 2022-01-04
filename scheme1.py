@@ -1,7 +1,7 @@
+import math
+
 from Cryptodome.Random import random
 from Cryptodome.Util.number import getStrongPrime
-from sympy.ntheory.factor_ import totient
-import math
 
 DEFAULT_KEYSIZE = 2048
 
@@ -24,7 +24,7 @@ class Private:
         self.gamma = gamma
 
 
-class PaillierScheme1:
+class PaillierScheme:
     def __init__(self, n_length=DEFAULT_KEYSIZE) -> None:
         p = q = n = 0
         n_len = 0
@@ -38,7 +38,7 @@ class PaillierScheme1:
 
         nsquared = n * n
         gamma = math.lcm(p - 1, q - 1)
-        
+
         g = 0
         for i in range(2, nsquared):
             if (
@@ -90,13 +90,21 @@ class PaillierScheme1:
 
 
 if __name__ == "__main__":
-    ps = PaillierScheme1()
-    ct1 = ps.encrypt(3)
-    ct2 = ps.encrypt(11)
+    ps = PaillierScheme()
+
+    m1 = random.randint(0, ps.public.n - 1)
+    m2 = random.randint(0, ps.public.n - 1)
+
+    ct1 = ps.encrypt(m1)
+    ct2 = ps.encrypt(m2)
 
     pt1 = ps.decrypt(ct1)
     pt2 = ps.decrypt(ct2)
 
     pt3 = ps.decrypt(ps.add_two_ciphertexts(ct1, ct2))
 
-    pass
+    assert pt1 == m1
+    assert pt2 == m2
+    assert pt1 + pt2 == pt3
+
+    print("Finished successfully")
