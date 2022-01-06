@@ -7,11 +7,11 @@ from Cryptodome.Random import random
 DEFAULT_KEYSIZE = 2048
 
 
-def Lfunction(u, n):
+def Lfunction(u: int, n: int) -> int:
     return (u - 1) // n
 
 
-def chinese_remainder(m, a):
+def chinese_remainder(m: list, a: list) -> int:
     total = 0
     prod = reduce(lambda acc, b: acc * b, m)
     for n_i, a_i in zip(m, a):
@@ -21,21 +21,21 @@ def chinese_remainder(m, a):
 
 
 class Public:
-    def __init__(self, n, g, nsquared) -> None:
+    def __init__(self, n: int, g: int, nsquared: int) -> None:
         self.n = n
         self.g = g
         self.nsquared = nsquared
 
 
 class Private:
-    def __init__(self, p, q, alpha) -> None:
+    def __init__(self, p: int, q: int, alpha: int) -> None:
         self.p = p
         self.q = q
         self.alpha = alpha
 
 
 class PaillierScheme:
-    def __init__(self, n_length=DEFAULT_KEYSIZE) -> None:
+    def __init__(self, n_length: int = DEFAULT_KEYSIZE) -> None:
         dsa1 = DSA.generate(n_length // 2)
         dsa2 = DSA.generate(n_length // 2)
         assert pow(dsa1.g, dsa1.q * dsa1.p, dsa1.p * dsa1.p) == 1
@@ -55,9 +55,12 @@ class PaillierScheme:
         self.public = Public(n, g, nsquared)
         self.private = Private(p, q, alpha)
 
-    def encrypt(self, message):
+    def encrypt(self, message: int) -> int:
         if message >= self.public.n:
             raise ValueError("Message must be less than n")
+
+        if message.bit_length() > 32:
+            raise ValueError("Message can't be more than 32 bits long")
 
         # generate r using generator
         r = pow(
@@ -65,7 +68,7 @@ class PaillierScheme:
             random.randint(1, self.public.n),
             self.public.nsquared,
         )
-        
+
         # generate r as random element and check if they belong to Z*_n
         # while True:
         #     r = random.randint(1, self.public.n)
@@ -90,7 +93,7 @@ class PaillierScheme:
 
         return ciphertext
 
-    def decrypt(self, ciphertext):
+    def decrypt(self, ciphertext: int) -> int:
         if ciphertext >= self.public.nsquared:
             raise ValueError("Ciphertext must be less than nsquared")
 
@@ -107,7 +110,7 @@ class PaillierScheme:
 
         return message
 
-    def add_two_ciphertexts(self, ct1, ct2):
+    def add_two_ciphertexts(self, ct1: int, ct2: int) -> int:
         return (ct1 * ct2) % ps.public.nsquared
 
 

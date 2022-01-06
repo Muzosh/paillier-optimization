@@ -6,26 +6,26 @@ from Cryptodome.Util.number import getStrongPrime
 DEFAULT_KEYSIZE = 2048
 
 
-def Lfunction(u, n):
+def Lfunction(u: int, n: int) -> int:
     return (u - 1) // n
 
 
 class Public:
-    def __init__(self, n, g, nsquared) -> None:
+    def __init__(self, n: int, g: int, nsquared: int) -> None:
         self.n = n
         self.g = g
         self.nsquared = nsquared
 
 
 class Private:
-    def __init__(self, p, q, gamma) -> None:
+    def __init__(self, p: int, q: int, gamma: int) -> None:
         self.p = p
         self.q = q
         self.gamma = gamma
 
 
 class PaillierScheme:
-    def __init__(self, n_length=DEFAULT_KEYSIZE) -> None:
+    def __init__(self, n_length: int = DEFAULT_KEYSIZE) -> None:
         p = q = n = 0
         n_len = 0
         while n_len != n_length:
@@ -51,9 +51,12 @@ class PaillierScheme:
         self.public = Public(n, g, nsquared)
         self.private = Private(p, q, gamma)
 
-    def encrypt(self, message):
+    def encrypt(self, message: int) -> int:
         if message >= self.public.n:
             raise ValueError("Message must be less than n")
+
+        if message.bit_length() > 32:
+            raise ValueError("Message can't be more than 32 bits long")
 
         while True:
             r = random.randint(1, self.public.n)
@@ -68,7 +71,7 @@ class PaillierScheme:
 
         return ciphertext
 
-    def decrypt(self, ciphertext):
+    def decrypt(self, ciphertext: int) -> int:
         if ciphertext >= self.public.nsquared:
             raise ValueError("Ciphertext must be less than nsquared")
 
@@ -85,7 +88,7 @@ class PaillierScheme:
 
         return message
 
-    def add_two_ciphertexts(self, ct1, ct2):
+    def add_two_ciphertexts(self, ct1: int, ct2: int) -> int:
         return (ct1 * ct2) % ps.public.nsquared
 
 

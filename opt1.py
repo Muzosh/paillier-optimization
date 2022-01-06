@@ -1,5 +1,8 @@
+from __future__ import annotations
+
 import json
 import math
+import os
 from datetime import datetime
 from functools import reduce
 
@@ -17,11 +20,11 @@ if USE_PARALLEL:
     NUM_CORES = multiprocessing.cpu_count()
 
 
-def Lfunction(u, n):
+def Lfunction(u: int, n: int) -> int:
     return (u - 1) // n
 
 
-def chinese_remainder(m, a):
+def chinese_remainder(m: list, a: list) -> int:
     total = 0
     prod = reduce(lambda acc, b: acc * b, m)
     for n_i, a_i in zip(m, a):
@@ -31,21 +34,23 @@ def chinese_remainder(m, a):
 
 
 class Public:
-    def __init__(self, n, g, nsquared) -> None:
+    def __init__(self, n: int, g: int, nsquared: int) -> None:
         self.n = n
         self.g = g
         self.nsquared = nsquared
 
 
 class Private:
-    def __init__(self, p, q, alpha) -> None:
+    def __init__(self, p: int, q: int, alpha: int) -> None:
         self.p = p
         self.q = q
         self.alpha = alpha
 
 
 class PaillierScheme:
-    def __init__(self, generate=True, n_length=DEFAULT_KEYSIZE) -> None:
+    def __init__(
+        self, generate: bool = True, n_length: int = DEFAULT_KEYSIZE
+    ) -> None:
         if generate:
             dsa1 = DSA.generate(n_length // 2)
             dsa2 = DSA.generate(n_length // 2)
@@ -72,7 +77,7 @@ class PaillierScheme:
             self.saveJson()
 
     @staticmethod
-    def constructFromJsonFile(file_name):
+    def constructFromJsonFile(file_name: str) -> PaillierScheme:
         ps = PaillierScheme(generate=False)
         if file_name is not None:
             with open("params/" + file_name, encoding="ISO-8859-2") as file:
@@ -87,12 +92,15 @@ class PaillierScheme:
                     private["p"], private["q"], private["alpha"]
                 )
 
+                if "precomputed_gm" not in data:
+                    raise ValueError("precomputed_gm is missing in the data")
+
                 ps.precomputed_gm = data["precomputed_gm"]
                 return ps
         else:
             raise AttributeError("File not found")
 
-    def saveJson(self):
+    def saveJson(self) -> None:
         params = {
             "opt": 1,
             "public": self.public.__dict__,
@@ -104,18 +112,22 @@ class PaillierScheme:
             "opt1-" + str(datetime.now()).replace(" ", "_") + ".json"
         )
 
+        if not os.path.exists("params"):
+            os.mkdir("params")
+
         with open(
             "params/" + self.file_name, "w", encoding="ISO-8859-2"
         ) as file:
             json.dump(params, file)
 
     @staticmethod
-    def compute_gm(g, x, i, j, nsquared):
+    def compute_gm(g: int, x: int, i: int, j: int, nsquared: int) -> int:
         value = pow(g, ((x ** i) * j), nsquared)
-        print(f"Precomputed for i = {i} and j = {j}")
+        if j % 1000 == 0:
+            print(f"Precomputed g^m for i = {i} and j = {j}")
         return value
 
-    def precompute_gm(self, g, nsquared):
+    def precompute_gm(self, g: int, nsquared: int) -> None:
         x = 2 ** 16
         self.precomputed_gm = {}
 
@@ -139,9 +151,12 @@ class PaillierScheme:
                         g, x, i, j, nsquared
                     )
 
-    def encrypt(self, message):
+    def encrypt(self, message: int) -> int:
         if message >= self.public.n:
             raise ValueError("Message must be less than n")
+
+        if message.bit_length() > 32:
+            raise ValueError("Message can't be more than 32 bits long")
 
         x = 2 ** 16
 
@@ -179,7 +194,7 @@ class PaillierScheme:
 
         return ciphertext
 
-    def decrypt(self, ciphertext):
+    def decrypt(self, ciphertext: int) -> int:
         if ciphertext >= self.public.nsquared:
             raise ValueError("Ciphertext must be less than nsquared")
 
@@ -196,15 +211,15 @@ class PaillierScheme:
 
         return message
 
-    def add_two_ciphertexts(self, ct1, ct2):
+    def add_two_ciphertexts(self, ct1: int, ct2: int):
         return (ct1 * ct2) % ps.public.nsquared
 
 
 if __name__ == "__main__":
-    ps = PaillierScheme.constructFromJsonFile(
-        "opt1-2022-01-06_22:16:03.993283.json"
-    )
-    # ps = PaillierScheme()
+    # ps = PaillierScheme.constructFromJsonFile(
+    #     "opt1-2022-01-06_22:16:03.993283.json"
+    # )
+    ps = PaillierScheme()
 
     m1 = random.getrandbits(32)
     m2 = random.getrandbits(32)

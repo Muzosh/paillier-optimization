@@ -12,6 +12,7 @@ from Cryptodome.Random import random
 
 DEFAULT_KEYSIZE = 2048
 USE_PARALLEL = True
+DATA_SIZE = 2 ** 16
 
 if USE_PARALLEL:
     import multiprocessing
@@ -73,7 +74,9 @@ class PaillierScheme:
             self.public = Public(n, g, nsquared)
             self.private = Private(p, q, alpha)
             self.precomputed_gnr = []
+            self.precomputed_gm = {}
 
+            self.precompute_gm(g, nsquared)
             self.precompute_gnr(g, n, nsquared)
             self.saveJson()
 
@@ -92,25 +95,33 @@ class PaillierScheme:
                 ps.private = Private(
                     private["p"], private["q"], private["alpha"]
                 )
-                
-                if "precomputed_gnr" not in data:
-                    raise ValueError("precomputed_gnr is missing in the data")
+
+                if any(
+                    key not in data
+                    for key in ("precomputed_gnr", "precomputed_gm")
+                ):
+                    raise ValueError(
+                        "precomputed_gnr or precomputed_gm is missing in the"
+                        " data"
+                    )
 
                 ps.precomputed_gnr = data["precomputed_gnr"]
+                ps.precomputed_gm = data["precomputed_gm"]
                 return ps
         else:
             raise AttributeError("File not found")
 
     def saveJson(self) -> None:
         params = {
-            "opt": 2,
+            "opt": 3,
             "public": self.public.__dict__,
             "private": self.private.__dict__,
             "precomputed_gnr": self.precomputed_gnr,
+            "precomputed_gm": self.precomputed_gm,
         }
 
         self.file_name = (
-            "opt2-" + str(datetime.now()).replace(" ", "_") + ".json"
+            "opt3-" + str(datetime.now()).replace(" ", "_") + ".json"
         )
 
         if not os.path.exists("params"):
@@ -133,29 +144,58 @@ class PaillierScheme:
         #         break
 
         gnr = pow(gn, r, nsquared)
-        if i % 1000 == 0:
+        if i % 100 == 0:
             print(f"Precomputed g^n^r for i = {i}")
         return gnr
 
     def precompute_gnr(self, g: int, n: int, nsquared: int) -> None:
-        x = 2 ** 16
         gn = pow(g, n, nsquared)
 
         self.precomputed_gnr = []
         if USE_PARALLEL:
             result = Parallel(n_jobs=NUM_CORES)(
                 delayed(self.compute_gnr)(g, n, nsquared, gn, i)
-                for i in range(x)
+                for i in range(DATA_SIZE)
             )
             if isinstance(result, list):
                 self.precomputed_gnr.extend(result)
             else:
                 raise TypeError("Result should be list of ints!")
         else:
-            for i in range(x):
+            for i in range(DATA_SIZE):
                 self.precomputed_gnr.append(
                     self.compute_gnr(g, n, nsquared, gn, i)
                 )
+
+    @staticmethod
+    def compute_gm(g: int, x: int, i: int, j: int, nsquared: int) -> int:
+        value = pow(g, ((x ** i) * j), nsquared)
+        if j % 100 == 0:
+            print(f"Precomputed g^m for i = {i} and j = {j}")
+        return value
+
+    def precompute_gm(self, g: int, nsquared: int) -> None:
+        self.precomputed_gm = {}
+
+        for i in [0, 1]:
+            self.precomputed_gm[str(i)] = {}
+
+            if USE_PARALLEL:
+                result = Parallel(n_jobs=NUM_CORES)(
+                    delayed(self.compute_gm)(g, DATA_SIZE, i, j, nsquared)
+                    for j in range(DATA_SIZE)
+                )
+                if isinstance(result, list):
+                    self.precomputed_gm[str(i)] = {
+                        str(index): value for index, value in enumerate(result)
+                    }
+                else:
+                    raise TypeError("Result should be list of ints!")
+            else:
+                for j in range(DATA_SIZE):
+                    self.precomputed_gm[str(i)][str(i)] = self.compute_gm(
+                        g, DATA_SIZE, i, j, nsquared
+                    )
 
     def encrypt(self, message: int) -> int:
         if message >= self.public.n:
@@ -164,9 +204,19 @@ class PaillierScheme:
         if message.bit_length() > 32:
             raise ValueError("Message can't be more than 32 bits long")
 
+        j0 = (message // (DATA_SIZE ** 0)) % DATA_SIZE
+        j1 = (message // (DATA_SIZE ** 1)) % DATA_SIZE
+
         gm = (
-            pow(self.public.g, message, self.public.nsquared)
-            % self.public.nsquared
+            self.precomputed_gm["1"][str(j1)]
+            * self.precomputed_gm["0"][str(j0)]
+        ) % self.public.nsquared
+
+        # generate r using generator
+        r = pow(
+            self.public.g,
+            random.randint(1, self.public.n),
+            self.public.nsquared,
         )
 
         gnr = (
@@ -206,8 +256,8 @@ if __name__ == "__main__":
     # )
     ps = PaillierScheme()
 
-    m1 = random.getrandbits(32)
-    m2 = random.getrandbits(32)
+    m1 = random.getrandbits(int(math.log2(DATA_SIZE)) * 2)
+    m2 = random.getrandbits(int(math.log2(DATA_SIZE)) * 2)
 
     ct1 = ps.encrypt(m1)
     ct2 = ps.encrypt(m2)
