@@ -1,10 +1,8 @@
 import json
 import math
+from datetime import datetime
 from functools import reduce
 from operator import mul
-import multiprocessing
-from datetime import datetime
-
 
 from Cryptodome.PublicKey import DSA
 from Cryptodome.Random import random
@@ -59,7 +57,7 @@ class PaillierScheme:
             q = dsa2.p
             n = p * q
             nsquared = n * n
-            gamma = math.lcm(p - 1, q - 1)
+            gamma = abs((p-1)*(q-1)) // math.gcd((p-1), (q-1))
 
             g = chinese_remainder([p * p, q * q], [dsa1.g, dsa2.g])
             alpha = dsa1.q * dsa2.q
@@ -112,52 +110,41 @@ class PaillierScheme:
         ) as file:
             json.dump(params, file)
 
-    def compute_gnr(self, gn, i):
+    @staticmethod
+    def compute_gnr(g, n, nsquared, gn, i):
         # generate r using generator
-        r = pow(
-            self.public.g,
-            random.randint(1, self.public.n),
-            self.public.nsquared,
-        )
+        r = pow(g, random.randint(1, n), nsquared)
 
         # generate r as random element and check if they belong to Z*_n
         # while True:
-        #     r = random.randint(1, self.public.n)
-        #     if math.gcd(r, self.public.n) == 1:
+        #     r = random.randint(1, n)
+        #     if math.gcd(r, n) == 1:
         #         break
 
-        gnr = pow(gn, r, self.public.nsquared)
-        self.precomputed_gnr.append(gnr)
-        print(f"Precomputed for i = {i}")
+        gnr = pow(gn, r, nsquared)
+        if i % 1000 == 0:
+            print(f"Precomputed for i = {i}")
+        return gnr
 
     def precompute_gnr(self, g: int, n: int, nsquared: int):
         x = 2 ** 16
         gn = pow(g, n, nsquared)
 
         self.precomputed_gnr = []
-
         if USE_PARALLEL:
-            Parallel(n_jobs=NUM_CORES)(
-                delayed(self.compute_gnr)(gn, i) for i in range(x)
+            result = Parallel(n_jobs=NUM_CORES)(
+                delayed(self.compute_gnr)(g, n, nsquared, gn, i)
+                for i in range(x)
             )
+            if isinstance(result, list):
+                self.precomputed_gnr.extend(result)
+            else:
+                raise TypeError("Result should be list of ints!")
         else:
             for i in range(x):
-                # generate r using generator
-                r = pow(
-                    self.public.g,
-                    random.randint(1, self.public.n),
-                    self.public.nsquared,
+                self.precomputed_gnr.append(
+                    self.compute_gnr(g, n, nsquared, gn, i)
                 )
-
-                # generate r as random element and check if they belong to Z*_n
-                # while True:
-                #     r = random.randint(1, self.public.n)
-                #     if math.gcd(r, self.public.n) == 1:
-                #         break
-
-                gnr = pow(gn, r, self.public.nsquared)
-                self.precomputed_gnr.append(gnr)
-                print(f"Precomputed for i = {i}")
 
     def encrypt(self, message):
         if message >= self.public.n:

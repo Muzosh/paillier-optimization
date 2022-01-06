@@ -109,28 +109,35 @@ class PaillierScheme:
         ) as file:
             json.dump(params, file)
 
-    def compute_gm(self, g, x, i, j, nsquared):
+    @staticmethod
+    def compute_gm(g, x, i, j, nsquared):
         value = pow(g, ((x ** i) * j), nsquared)
-        self.precomputed_gm[i][j] = value
         print(f"Precomputed for i = {i} and j = {j}")
+        return value
 
     def precompute_gm(self, g, nsquared):
         x = 2 ** 16
         self.precomputed_gm = {}
-        
+
         for i in [0, 1]:
-            self.precomputed_gm[i] = {}
-            
+            self.precomputed_gm[str(i)] = {}
+
             if USE_PARALLEL:
-                Parallel(n_jobs=NUM_CORES)(
+                result = Parallel(n_jobs=NUM_CORES)(
                     delayed(self.compute_gm)(g, x, i, j, nsquared)
                     for j in range(x)
                 )
+                if isinstance(result, list):
+                    self.precomputed_gm[str(i)] = {
+                        str(index): value for index, value in enumerate(result)
+                    }
+                else:
+                    raise TypeError("Result should be list of ints!")
             else:
                 for j in range(x):
-                    value = pow(g, ((x ** i) * j), nsquared)
-                    self.precomputed_gm[i][j] = value
-                    print(f"Precomputed for i = {i} and j = {j}")
+                    self.precomputed_gm[str(i)][str(i)] = self.compute_gm(
+                        g, x, i, j, nsquared
+                    )
 
     def encrypt(self, message):
         if message >= self.public.n:
@@ -194,11 +201,10 @@ class PaillierScheme:
 
 
 if __name__ == "__main__":
-    # ps = PaillierScheme.constructFromJsonFile(
-    #     "opt1-65882260747573595674415330539362164"
-    #     "203477063818498049391976814605010170390900.json"
-    # )
-    ps = PaillierScheme()
+    ps = PaillierScheme.constructFromJsonFile(
+        "opt1-2022-01-06_22:16:03.993283.json"
+    )
+    # ps = PaillierScheme()
 
     m1 = random.getrandbits(32)
     m2 = random.getrandbits(32)
