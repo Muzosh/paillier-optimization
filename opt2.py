@@ -1,7 +1,10 @@
 import json
 import math
-from datetime import datetime
 from functools import reduce
+from operator import mul
+import multiprocessing
+from datetime import datetime
+
 
 from Cryptodome.PublicKey import DSA
 from Cryptodome.Random import random
@@ -66,9 +69,9 @@ class PaillierScheme:
 
             self.public = Public(n, g, nsquared)
             self.private = Private(p, q, alpha)
-            self.precomputed_gm = {}
+            self.precomputed_gnr = []
 
-            self.precompute_gm(g, nsquared)
+            self.precompute_gnr(g, n, nsquared)
             self.saveJson()
 
     @staticmethod
@@ -87,21 +90,21 @@ class PaillierScheme:
                     private["p"], private["q"], private["alpha"]
                 )
 
-                ps.precomputed_gm = data["precomputed_gm"]
+                ps.precomputed_gnr = data["precomputed_gnr"]
                 return ps
         else:
             raise AttributeError("File not found")
 
     def saveJson(self):
         params = {
-            "opt": 1,
+            "opt": 2,
             "public": self.public.__dict__,
             "private": self.private.__dict__,
-            "precomputed_gm": self.precomputed_gm,
+            "precomputed_gnr": self.precomputed_gnr,
         }
 
         self.file_name = (
-            "opt1-" + str(datetime.now()).replace(" ", "_") + ".json"
+            "opt2-" + str(datetime.now()).replace(" ", "_") + ".json"
         )
 
         with open(
@@ -109,43 +112,7 @@ class PaillierScheme:
         ) as file:
             json.dump(params, file)
 
-    def compute_gm(self, g, x, i, j, nsquared):
-        value = pow(g, ((x ** i) * j), nsquared)
-        self.precomputed_gm[i][j] = value
-        print(f"Precomputed for i = {i} and j = {j}")
-
-    def precompute_gm(self, g, nsquared):
-        x = 2 ** 16
-        self.precomputed_gm = {}
-        
-        for i in [0, 1]:
-            self.precomputed_gm[i] = {}
-            
-            if USE_PARALLEL:
-                Parallel(n_jobs=NUM_CORES)(
-                    delayed(self.compute_gm)(g, x, i, j, nsquared)
-                    for j in range(x)
-                )
-            else:
-                for j in range(x):
-                    value = pow(g, ((x ** i) * j), nsquared)
-                    self.precomputed_gm[i][j] = value
-                    print(f"Precomputed for i = {i} and j = {j}")
-
-    def encrypt(self, message):
-        if message >= self.public.n:
-            raise ValueError("Message must be less than n")
-
-        x = 2 ** 16
-
-        j0 = (message // (x ** 0)) % x
-        j1 = (message // (x ** 1)) % x
-
-        gm = (
-            self.precomputed_gm["1"][str(j1)]
-            * self.precomputed_gm["0"][str(j0)]
-        ) % self.public.nsquared
-
+    def compute_gnr(self, gn, i):
         # generate r using generator
         r = pow(
             self.public.g,
@@ -159,12 +126,50 @@ class PaillierScheme:
         #     if math.gcd(r, self.public.n) == 1:
         #         break
 
-        gnr = (
-            pow(
-                pow(self.public.g, self.public.n, self.public.nsquared),
-                r,
-                self.public.nsquared,
+        gnr = pow(gn, r, self.public.nsquared)
+        self.precomputed_gnr.append(gnr)
+        print(f"Precomputed for i = {i}")
+
+    def precompute_gnr(self, g: int, n: int, nsquared: int):
+        x = 2 ** 16
+        gn = pow(g, n, nsquared)
+
+        self.precomputed_gnr = []
+
+        if USE_PARALLEL:
+            Parallel(n_jobs=NUM_CORES)(
+                delayed(self.compute_gnr)(gn, i) for i in range(x)
             )
+        else:
+            for i in range(x):
+                # generate r using generator
+                r = pow(
+                    self.public.g,
+                    random.randint(1, self.public.n),
+                    self.public.nsquared,
+                )
+
+                # generate r as random element and check if they belong to Z*_n
+                # while True:
+                #     r = random.randint(1, self.public.n)
+                #     if math.gcd(r, self.public.n) == 1:
+                #         break
+
+                gnr = pow(gn, r, self.public.nsquared)
+                self.precomputed_gnr.append(gnr)
+                print(f"Precomputed for i = {i}")
+
+    def encrypt(self, message):
+        if message >= self.public.n:
+            raise ValueError("Message must be less than n")
+
+        gm = (
+            pow(self.public.g, message, self.public.nsquared)
+            % self.public.nsquared
+        )
+
+        gnr = (
+            reduce(mul, random.sample(self.precomputed_gnr, 8), 1)
             % self.public.nsquared
         )
 
@@ -195,8 +200,8 @@ class PaillierScheme:
 
 if __name__ == "__main__":
     # ps = PaillierScheme.constructFromJsonFile(
-    #     "opt1-65882260747573595674415330539362164"
-    #     "203477063818498049391976814605010170390900.json"
+    #     "opt2-1050062191477719247145298894371156888"
+    #     "41060793516462453144933171250246011525005.json"
     # )
     ps = PaillierScheme()
 

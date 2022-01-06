@@ -59,10 +59,18 @@ class PaillierScheme:
         if message >= self.public.n:
             raise ValueError("Message must be less than n")
 
-        while True:
-            r = random.randint(1, self.public.n)
-            if math.gcd(r, self.public.n) == 1:
-                break
+        # generate r using generator
+        r = pow(
+            self.public.g,
+            random.randint(1, self.public.n),
+            self.public.nsquared,
+        )
+        
+        # generate r as random element and check if they belong to Z*_n
+        # while True:
+        #     r = random.randint(1, self.public.n)
+        #     if math.gcd(r, self.public.n) == 1:
+        #         break
 
         gm = (
             pow(self.public.g, message, self.public.nsquared)
