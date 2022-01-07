@@ -1,4 +1,6 @@
-data = {"precomputed_gnr": 1, "precomputed_gm": 2}
+from Cryptodome.Random import random
+import os
 
-if any(key not in data for key in ("precomputed_gnr", "precomputed_gm")):
-    print("true")
+file_name = "test"
+
+print(os.path.join("params", file_name))
