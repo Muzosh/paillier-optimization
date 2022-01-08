@@ -3,12 +3,8 @@ import math
 from Cryptodome.Random import random
 from Cryptodome.Util.number import getStrongPrime
 
-DEFAULT_KEYSIZE = 2048
-
-
-# Paillier's L-function
-def Lfunction(u: int, n: int) -> int:
-    return (u - 1) // n
+from .common import Lfunction
+from .config import DEFAULT_KEYSIZE
 
 
 class Public:
@@ -60,16 +56,14 @@ class PaillierScheme:
         if message >= self.public.n:
             raise ValueError("Message must be less than n")
 
-        if message.bit_length() > 32:
-            raise ValueError("Message can't be more than 32 bits long")
-
         # Generate r using generator g
         # TODO: does this work when g is generator of Z*_nsquared but
         # r needs to be element of Z*_n?
+        # so far it seems to work
         r = pow(
             self.public.g,
             random.randint(1, self.public.n),
-            self.public.nsquared,
+            self.public.n,
         )
 
         # Generate r as random element and check if they belong to Z*_n
@@ -106,25 +100,4 @@ class PaillierScheme:
         return message
 
     def add_two_ciphertexts(self, ct1: int, ct2: int) -> int:
-        return (ct1 * ct2) % ps.public.nsquared
-
-
-if __name__ == "__main__":
-    ps = PaillierScheme()
-
-    m1 = random.getrandbits(32)
-    m2 = random.getrandbits(32)
-
-    ct1 = ps.encrypt(m1)
-    ct2 = ps.encrypt(m2)
-
-    pt1 = ps.decrypt(ct1)
-    pt2 = ps.decrypt(ct2)
-
-    pt3 = ps.decrypt(ps.add_two_ciphertexts(ct1, ct2))
-
-    assert pt1 == m1
-    assert pt2 == m2
-    assert pt1 + pt2 == pt3
-
-    print("Finished successfully")
+        return (ct1 * ct2) % self.public.nsquared

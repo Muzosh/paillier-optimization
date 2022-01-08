@@ -4,14 +4,12 @@ import json
 import math
 import os
 from datetime import datetime
-from functools import reduce
 
 from Cryptodome.PublicKey import DSA
 from Cryptodome.Random import random
 
-DEFAULT_KEYSIZE = 2048
-USE_PARALLEL = True
-POWER = 2 ** 16
+from .common import PARAMS_PATH, Lfunction, chinese_remainder
+from .config import DEFAULT_KEYSIZE, POWER, USE_PARALLEL, CHEAT
 
 if USE_PARALLEL:
     import multiprocessing
@@ -19,22 +17,6 @@ if USE_PARALLEL:
     from joblib import Parallel, delayed
 
     NUM_CORES = multiprocessing.cpu_count()
-
-
-# Paillier's L-function
-def Lfunction(u: int, n: int) -> int:
-    return (u - 1) // n
-
-
-# Chinese remainder theorem from
-# https://medium.com/analytics-vidhya/chinese-remainder-theorem-using-python-25f051e391fc
-def chinese_remainder(m: list, a: list) -> int:
-    total = 0
-    prod = reduce(lambda acc, b: acc * b, m)
-    for n_i, a_i in zip(m, a):
-        p = prod // n_i
-        total += a_i * pow(p, -1, n_i) * p
-    return total % prod
 
 
 class Public:
@@ -101,7 +83,7 @@ class PaillierScheme:
         ps = PaillierScheme(generate=False)
         if file_name is not None:
             with open(
-                os.path.join("params", file_name), encoding="ISO-8859-2"
+                os.path.join(PARAMS_PATH, file_name), encoding="ISO-8859-2"
             ) as file:
                 data = json.load(file)
                 public = data["public"]
@@ -136,11 +118,13 @@ class PaillierScheme:
             + ".json"
         )
 
-        if not os.path.exists("params"):
-            os.mkdir("params")
+        if not os.path.exists(PARAMS_PATH):
+            os.mkdir(PARAMS_PATH)
 
         with open(
-            os.path.join("params", self.file_name), "w", encoding="ISO-8859-2"
+            os.path.join(PARAMS_PATH, self.file_name),
+            "w",
+            encoding="ISO-8859-2",
         ) as file:
             json.dump(params, file)
 
@@ -192,12 +176,15 @@ class PaillierScheme:
             * self.precomputed_gm["1"][str(j1)]
         ) % self.public.nsquared
 
-        # generate r using generator g
-        r = pow(
-            self.public.g,
-            random.randint(1, self.public.n),
-            self.public.nsquared,
-        )
+        # Generate r using generator g
+        if CHEAT:
+            r = random.randint(1, self.private.alpha - 1)
+        else:
+            r = pow(
+                self.public.g,
+                random.randint(1, self.public.n),
+                self.public.n,
+            )
 
         # generate r as random element and check if they belong to Z*_n
         # while True:
@@ -239,28 +226,4 @@ class PaillierScheme:
         return message
 
     def add_two_ciphertexts(self, ct1: int, ct2: int):
-        return (ct1 * ct2) % ps.public.nsquared
-
-
-if __name__ == "__main__":
-    # ps = PaillierScheme.constructFromJsonFile(
-    #     "opt1-2022-01-06_22:16:03.993283.json"
-    # )
-    ps = PaillierScheme()
-
-    m1 = random.getrandbits(int(math.log2(POWER)) * 2)
-    m2 = random.getrandbits(int(math.log2(POWER)) * 2)
-
-    ct1 = ps.encrypt(m1)
-    ct2 = ps.encrypt(m2)
-
-    pt1 = ps.decrypt(ct1)
-    pt2 = ps.decrypt(ct2)
-
-    pt3 = ps.decrypt(ps.add_two_ciphertexts(ct1, ct2))
-
-    assert pt1 == m1
-    assert pt2 == m2
-    assert pt1 + pt2 == pt3
-
-    print("Finished successfully")
+        return (ct1 * ct2) % self.public.nsquared
