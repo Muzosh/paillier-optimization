@@ -1,7 +1,8 @@
-from genericpath import exists
-import matplotlib.pyplot as plt
-import os
 import json
+import os
+from statistics import mean
+
+import matplotlib.pyplot as plt
 
 
 def plot(file_path):
@@ -20,7 +21,27 @@ def plot(file_path):
     plt.xlabel("Iteration")
     plt.ylabel("Execution time [ms]")
     plt.title("Encryption times in miliseconds")
-    plt.legend(["scheme1", "scheme3", "opt1", "opt2", "opt3"])
+    plt.legend(
+        [
+            "scheme1 - avg: "
+            + "%.2f"
+            % mean([time * (10 ** 3) for time in data["scheme1"]["enc"]])
+            + " ms",
+            "scheme3 - avg: "
+            + "%.2f"
+            % mean([time * (10 ** 3) for time in data["scheme3"]["enc"]])
+            + " ms",
+            "opt1 - avg: "
+            + "%.2f" % mean([time * (10 ** 3) for time in data["opt1"]["enc"]])
+            + " ms",
+            "opt2 - avg: "
+            + "%.2f" % mean([time * (10 ** 3) for time in data["opt2"]["enc"]])
+            + " ms",
+            "opt3 - avg: "
+            + "%.2f" % mean([time * (10 ** 3) for time in data["opt3"]["enc"]])
+            + " ms",
+        ]
+    )
 
     plt.subplot(1, 2, 2)
     for scheme in schemes:
@@ -32,7 +53,27 @@ def plot(file_path):
     plt.xlabel("Iteration")
     plt.ylabel("Execution time [ms]")
     plt.title("Decryption times in miliseconds")
-    plt.legend(["scheme1", "scheme3", "opt1", "opt2", "opt3"])
+    plt.legend(
+        [
+            "scheme1 - avg: "
+            + "%.2f"
+            % mean([time * (10 ** 3) for time in data["scheme1"]["dec"]])
+            + " ms",
+            "scheme3 - avg: "
+            + "%.2f"
+            % mean([time * (10 ** 3) for time in data["scheme3"]["dec"]])
+            + " ms",
+            "opt1 - avg: "
+            + "%.2f" % mean([time * (10 ** 3) for time in data["opt1"]["dec"]])
+            + " ms",
+            "opt2 - avg: "
+            + "%.2f" % mean([time * (10 ** 3) for time in data["opt2"]["dec"]])
+            + " ms",
+            "opt3 - avg: "
+            + "%.2f" % mean([time * (10 ** 3) for time in data["opt3"]["dec"]])
+            + " ms",
+        ]
+    )
 
     plt.suptitle(
         "Paillier encryption scheme optimalization - CHEAT: "
