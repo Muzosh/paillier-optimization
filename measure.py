@@ -7,7 +7,7 @@ from timeit import default_timer as timer
 from Cryptodome.Random import random
 
 from schemes import opt1, opt2, opt3, scheme1, scheme3
-from schemes.config import POWER, CHEAT, DEFAULT_KEYSIZE, POWER, NO_GNR
+from schemes.config import POWER, CHEAT, DEFAULT_KEYSIZE, NO_GNR
 
 BATCH_SIZE = 50
 

@@ -98,13 +98,13 @@ if __name__ == "__main__":
 
     print("Testing scheme1")
     testScheme1(m1, m2)
-    
+
     print("Testing scheme3")
     testScheme3(m1, m2)
-    
+
     print("Testing opt1")
     testOpt1(m1, m2)
-    
+
     print("Testing opt2")
     testOpt2(m1, m2)
 

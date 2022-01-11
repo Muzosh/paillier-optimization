@@ -5,6 +5,7 @@ PARAMS_PATH = os.path.join(
     os.path.dirname(os.path.dirname(__file__)), "params"
 )
 
+
 # Paillier's L-function
 def Lfunction(u: int, n: int) -> int:
     return (u - 1) // n
