@@ -7,7 +7,7 @@ from timeit import default_timer as timer
 from Cryptodome.Random import random
 
 from schemes import opt1, opt2, opt3, scheme1, scheme3
-from schemes.config import POWER, CHEAT
+from schemes.config import POWER, CHEAT, DEFAULT_KEYSIZE, POWER, NO_GNR
 
 BATCH_SIZE = 50
 
@@ -129,6 +129,9 @@ if __name__ == "__main__":
 
     results = {
         "cheat": CHEAT,
+        "no_gnr": NO_GNR,
+        "power": POWER,
+        "default_keysize": DEFAULT_KEYSIZE,
         "scheme1": {"enc": [], "dec": []},
         "scheme3": {"enc": [], "dec": []},
         "opt1": {"enc": [], "dec": []},
@@ -145,9 +148,7 @@ if __name__ == "__main__":
     file_path = os.path.join(
         RESULTS_PATH,
         (
-            "results-CHEAT-"
-            + ("ON" if CHEAT else "OFF")
-            + "-"
+            "results-"
             + str(datetime.now()).replace(" ", "_").replace(":", ".")
             + ".json"
         ),
