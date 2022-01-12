@@ -48,6 +48,10 @@ Depending on the scheme, there are additional functions for pre-computing and ot
 
 In order to see the results of the performance improvements, one must first run `measure.py` with selected `BATCH_SIZE` (number of messages to be encrypted and decrypted). Please check functions `fillTimesXXX` for scheme creation (loading from json file is preffered since pre-computing takes time). This script creates another json file in `results` directory.
 
+Some dummy parameters and values can be found [here](https://vutbr-my.sharepoint.com/:f:/g/personal/xmuzik08_vutbr_cz/EukPH0b5MPBNt6PfriKcKh8Bot8DD1u2x3h2W_bABpMHaQ?e=tZ6q07) (access is for @vutbr.cz only). Download them and put them into `params` project folder.
+
+Please note, that for `opt2.PaillierScheme.constructFileFromJson` YOU CAN USE file computed for `opt3.py` which contain values needed for Opt2 (Opt2 is part of Opt3).
+
 ### Plotting
 
 Simply run `plot.py` script. At the start, it will give you option to choose from listed `results` directory by selecting filename index or to input your own path to results file.
