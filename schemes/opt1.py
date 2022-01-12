@@ -9,7 +9,7 @@ from Cryptodome.PublicKey import DSA
 from Cryptodome.Random import random
 
 from .common import PARAMS_PATH, Lfunction, chinese_remainder
-from .config import DEFAULT_KEYSIZE, POWER, USE_PARALLEL, CHEAT
+from .config import CHEAT, DEFAULT_KEYSIZE, POWER, USE_PARALLEL
 
 if USE_PARALLEL:
     import multiprocessing
@@ -185,12 +185,6 @@ class PaillierScheme:
                 random.randint(1, self.public.n),
                 self.public.n,
             )
-
-        # generate r as random element and check if they belong to Z*_n
-        # while True:
-        #     r = random.randint(1, self.public.n)
-        #     if math.gcd(r, self.public.n) == 1:
-        #         break
 
         gnr = (
             pow(

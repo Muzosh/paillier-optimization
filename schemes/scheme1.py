@@ -56,21 +56,11 @@ class PaillierScheme:
         if message >= self.public.n:
             raise ValueError("Message must be less than n")
 
-        # Generate r using generator g
-        # TODO: does this work when g is generator of Z*_nsquared but
-        # r needs to be element of Z*_n?
-        # so far it seems to work
         r = pow(
             self.public.g,
             random.randint(1, self.public.n),
             self.public.n,
         )
-
-        # Generate r as random element and check if they belong to Z*_n
-        # while True:
-        #     r = random.randint(1, n)
-        #     if math.gcd(r, n) == 1:
-        #         break
 
         gm = pow(self.public.g, message, self.public.nsquared)
         rn = pow(r, self.public.n, self.public.nsquared)

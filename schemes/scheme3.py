@@ -4,7 +4,7 @@ from Cryptodome.PublicKey import DSA
 from Cryptodome.Random import random
 
 from .common import Lfunction, chinese_remainder
-from .config import DEFAULT_KEYSIZE, CHEAT
+from .config import CHEAT, DEFAULT_KEYSIZE
 
 
 class Public:
@@ -60,7 +60,6 @@ class PaillierScheme:
         if message >= self.public.n:
             raise ValueError("Message must be less than n")
 
-        # Generate r using generator g
         if CHEAT:
             r = random.randint(1, self.private.alpha - 1)
         else:
@@ -69,12 +68,6 @@ class PaillierScheme:
                 random.randint(1, self.public.n),
                 self.public.n,
             )
-
-        # Generate r as random element and check if they belong to Z*_n
-        # while True:
-        #     r = random.randint(1, self.public.n)
-        #     if math.gcd(r, self.public.n) == 1:
-        #         break
 
         gm = pow(self.public.g, message, self.public.nsquared)
 

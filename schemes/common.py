@@ -10,10 +10,23 @@ PARAMS_PATH = os.path.join(
 def Lfunction(u: int, n: int) -> int:
     return (u - 1) // n
 
-
-# Chinese remainder theorem from
-# https://medium.com/analytics-vidhya/chinese-remainder-theorem-using-python-25f051e391fc
 def chinese_remainder(m: list, a: list) -> int:
+    """
+    Chinese remainder theorem from
+    https://medium.com/analytics-vidhya/chinese-remainder-theorem-using-python-25f051e391fc
+    
+    Finds A for:
+        A = a1 (mod m1) \\
+        A = a2 (mod m2) \\
+        A = a3 (mod m3) and so on...
+
+    Args:
+        m (list): list of m1, m2, m3, ...
+        a (list): list of a1, a2, a3, ...
+
+    Returns:
+        int: returns A
+    """
     total = 0
     prod = reduce(lambda acc, b: acc * b, m)
     for n_i, a_i in zip(m, a):
