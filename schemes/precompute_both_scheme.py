@@ -119,7 +119,7 @@ class PaillierScheme:
 
     def saveJson(self) -> None:
         params = {
-            "opt": 3,
+            "scheme": "precompute_both",
             "public": self.public.__dict__,
             "private": self.private.__dict__,
             "precomputed_gnr": self.precomputed_gnr,
@@ -127,7 +127,7 @@ class PaillierScheme:
         }
 
         self.file_name = (
-            "opt3-"
+            "precompute_both-"
             + str(datetime.now()).replace(" ", "_").replace(":", ".")
             + ".json"
         )
@@ -150,7 +150,11 @@ class PaillierScheme:
         if CHEAT:
             r = random.randint(1, alpha - 1)
         else:
-            r = pow(g, random.randint(1, n), n)
+            r = pow(
+                g,
+                random.randint(1, n),
+                n,
+            )
 
         gnr = pow(gn, r, nsquared)
         if i % 1000 == 0:

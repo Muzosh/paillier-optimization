@@ -2,7 +2,13 @@ import math
 
 from Cryptodome.Random import random
 
-from schemes import scheme1, scheme3, opt1, opt2, opt3
+from schemes import (
+    precompute_both_scheme,
+    precompute_gm_scheme,
+    precompute_gnr_scheme,
+    scheme1,
+    scheme3,
+)
 from schemes.config import POWER
 
 
@@ -38,9 +44,9 @@ def testScheme3(m1, m2):
     assert pt1 + pt2 == pt3
 
 
-def testOpt1(m1, m2):
-    ps = opt1.PaillierScheme.constructFromJsonFile(
-        "opt1-2022-01-06_22:16:03.993283.json"
+def testPrecomputeGm(m1, m2):
+    ps = precompute_gm_scheme.PaillierScheme.constructFromJsonFile(
+        "precompute_gm-2022-01-06_22:16:03.993283.json"
     )
 
     ct1 = ps.encrypt(m1)
@@ -56,9 +62,9 @@ def testOpt1(m1, m2):
     assert pt1 + pt2 == pt3
 
 
-def testOpt2(m1, m2):
-    ps = opt2.PaillierScheme.constructFromJsonFile(
-        "opt3-2022-01-07_14.47.27.047353.json"
+def testPrecomputeGnr(m1, m2):
+    ps = precompute_gnr_scheme.PaillierScheme.constructFromJsonFile(
+        "precompute_both-2022-01-07_14.47.27.047353.json"
     )
 
     ct1 = ps.encrypt(m1)
@@ -74,9 +80,9 @@ def testOpt2(m1, m2):
     assert pt1 + pt2 == pt3
 
 
-def testOpt3(m1, m2):
-    ps = opt3.PaillierScheme.constructFromJsonFile(
-        "opt3-2022-01-07_14.47.27.047353.json"
+def testPrecomputeBoth(m1, m2):
+    ps = precompute_both_scheme.PaillierScheme.constructFromJsonFile(
+        "precompute_both-2022-01-07_14.47.27.047353.json"
     )
 
     ct1 = ps.encrypt(m1)
@@ -102,13 +108,13 @@ if __name__ == "__main__":
     print("Testing scheme3")
     testScheme3(m1, m2)
 
-    print("Testing opt1")
-    testOpt1(m1, m2)
+    print("Testing precompute_gm")
+    testPrecomputeGm(m1, m2)
 
-    print("Testing opt2")
-    testOpt2(m1, m2)
+    print("Testing precompute_gnr")
+    testPrecomputeGnr(m1, m2)
 
-    print("Testing opt3")
-    testOpt3(m1, m2)
+    print("Testing precompute_both")
+    testPrecomputeBoth(m1, m2)
 
     print("Finished successfully")

@@ -72,8 +72,8 @@ class PaillierScheme:
         gm = pow(self.public.g, message, self.public.nsquared)
 
         gnr = pow(
-            pow(self.public.g, self.public.n, self.public.nsquared),
-            r,
+            self.public.g,
+            (self.public.n * r) % self.public.n,
             self.public.nsquared,
         )
 

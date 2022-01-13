@@ -1,79 +1,67 @@
 import json
 import os
-from statistics import mean
+import statistics
 
 import matplotlib.pyplot as plt
 
 
 def plot(file_path):
-    schemes = ["scheme1", "scheme3", "opt1", "opt2", "opt3"]
+    schemes_path = os.path.join(os.path.dirname(__file__), "schemes")
+    if not os.path.exists(schemes_path):
+        raise LookupError(f"Scehemes directory does not exist: {schemes_path}")
+
+    schemes = [
+        e.replace("_scheme.py", "").replace(".py", "")
+        for e in os.listdir(schemes_path)
+        if e not in ("__init__.py", "__pycache__", "common.py", "config.py")
+    ]
+
     data = {}
     with open(file_path, encoding="ISO-8859-2") as file:
         data = json.load(file)
 
+    schemes_with_means = sorted(
+        [
+            (
+                scheme,
+                statistics.mean(
+                    [time * (10 ** 3) for time in data[scheme]["enc"]] or [0]
+                ),
+                statistics.mean(
+                    [time * (10 ** 3) for time in data[scheme]["dec"]] or [0]
+                ),
+            )
+            for scheme in schemes
+        ],
+        key=lambda x: x[1],
+        reverse=True,
+    )
+
     plt.subplot(1, 2, 1)
-    for scheme in schemes:
+    for scheme, mean, _ in schemes_with_means:
         plt.plot(
-            [i + 1 for i in range(50)],
+            [i + 1 for i in range(len(data[scheme]["enc"]))],
             [time * (10 ** 3) for time in data[scheme]["enc"]],
             "x-",
+            label=scheme + " - avg: " + "%.2f" % mean,
         )
     plt.xlabel("Iteration")
     plt.ylabel("Execution time [ms]")
     plt.title("Encryption times in miliseconds")
-    plt.legend(
-        [
-            "scheme1 - avg: "
-            + "%.2f"
-            % mean([time * (10 ** 3) for time in data["scheme1"]["enc"]])
-            + " ms",
-            "scheme3 - avg: "
-            + "%.2f"
-            % mean([time * (10 ** 3) for time in data["scheme3"]["enc"]])
-            + " ms",
-            "opt1 - avg: "
-            + "%.2f" % mean([time * (10 ** 3) for time in data["opt1"]["enc"]])
-            + " ms",
-            "opt2 - avg: "
-            + "%.2f" % mean([time * (10 ** 3) for time in data["opt2"]["enc"]])
-            + " ms",
-            "opt3 - avg: "
-            + "%.2f" % mean([time * (10 ** 3) for time in data["opt3"]["enc"]])
-            + " ms",
-        ]
-    )
+    plt.legend()
 
     plt.subplot(1, 2, 2)
-    for scheme in schemes:
+    for scheme, _, mean in schemes_with_means:
         plt.plot(
-            [i + 1 for i in range(50)],
+            [i + 1 for i in range(len(data[scheme]["dec"]))],
             [time * (10 ** 3) for time in data[scheme]["dec"]],
             "x-",
+            label=scheme + " - avg: " + "%.2f" % mean,
         )
     plt.xlabel("Iteration")
     plt.ylabel("Execution time [ms]")
     plt.title("Decryption times in miliseconds")
-    plt.legend(
-        [
-            "scheme1 - avg: "
-            + "%.2f"
-            % mean([time * (10 ** 3) for time in data["scheme1"]["dec"]])
-            + " ms",
-            "scheme3 - avg: "
-            + "%.2f"
-            % mean([time * (10 ** 3) for time in data["scheme3"]["dec"]])
-            + " ms",
-            "opt1 - avg: "
-            + "%.2f" % mean([time * (10 ** 3) for time in data["opt1"]["dec"]])
-            + " ms",
-            "opt2 - avg: "
-            + "%.2f" % mean([time * (10 ** 3) for time in data["opt2"]["dec"]])
-            + " ms",
-            "opt3 - avg: "
-            + "%.2f" % mean([time * (10 ** 3) for time in data["opt3"]["dec"]])
-            + " ms",
-        ]
-    )
+    plt.legend()
 
     plt.suptitle(
         "Paillier encryption scheme optimalization - CHEAT: "
@@ -89,6 +77,7 @@ if __name__ == "__main__":
         os.mkdir(results_path)
 
     filelist = os.listdir(results_path)
+    filelist.sort()
 
     print("--------------------------------------")
     for index, filename in enumerate(filelist):

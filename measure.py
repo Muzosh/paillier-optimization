@@ -6,8 +6,14 @@ from timeit import default_timer as timer
 
 from Cryptodome.Random import random
 
-from schemes import opt1, opt2, opt3, scheme1, scheme3
-from schemes.config import POWER, CHEAT, DEFAULT_KEYSIZE, NO_GNR
+from schemes import (
+    precompute_both_scheme,
+    precompute_gm_scheme,
+    precompute_gnr_scheme,
+    scheme1,
+    scheme3,
+)
+from schemes.config import CHEAT, DEFAULT_KEYSIZE, NO_GNR, POWER
 
 BATCH_SIZE = 50
 
@@ -54,15 +60,15 @@ def fillTimesScheme3(messages, results):
             raise ValueError("Scheme3: Decrypted is not the same as message")
 
 
-def fillTimesOpt1(messages, results):
-    print("Starting Opt1 filling...")
-    ps = opt1.PaillierScheme.constructFromJsonFile(
-        "opt1-2022-01-06_22:16:03.993283.json"
+def fillTimesPrecomputeGm(messages, results):
+    print("Starting precompute_gm filling...")
+    ps = precompute_gm_scheme.PaillierScheme.constructFromJsonFile(
+        "gm-2022-01-06_22:16:03.993283.json"
     )
-    print("Opt1 loaded")
+    print("precompute_gm loaded")
 
     for index, message in enumerate(messages):
-        print(f"Opt1: iteration {index+1} out of {BATCH_SIZE}")
+        print(f"precompute_gm: iteration {index+1} out of {BATCH_SIZE}")
         start = timer()
         ct = ps.encrypt(message)
         middle = timer()
@@ -70,21 +76,23 @@ def fillTimesOpt1(messages, results):
         end = timer()
 
         if pt == message:
-            results["opt1"]["enc"].append(middle - start)
-            results["opt1"]["dec"].append(end - middle)
+            results["precompute_gm"]["enc"].append(middle - start)
+            results["precompute_gm"]["dec"].append(end - middle)
         else:
-            raise ValueError("Opt1: Decrypted is not the same as message")
+            raise ValueError(
+                "precompute_gm: Decrypted is not the same as message"
+            )
 
 
-def fillTimesOpt2(messages, results):
-    print("Starting Opt2 filling...")
-    ps = opt2.PaillierScheme.constructFromJsonFile(
-        "opt3-2022-01-07_14.47.27.047353.json"
+def fillTimesPrecomputeGnr(messages, results):
+    print("Starting precompute_gnr filling...")
+    ps = precompute_gnr_scheme.PaillierScheme.constructFromJsonFile(
+        "both-2022-01-07_14.47.27.047353.json"
     )
-    print("Opt2 loaded")
+    print("precompute_gnr loaded")
 
     for index, message in enumerate(messages):
-        print(f"Opt2: iteration {index+1} out of {BATCH_SIZE}")
+        print(f"precompute_gnr: iteration {index+1} out of {BATCH_SIZE}")
         start = timer()
         ct = ps.encrypt(message)
         middle = timer()
@@ -92,21 +100,23 @@ def fillTimesOpt2(messages, results):
         end = timer()
 
         if pt == message:
-            results["opt2"]["enc"].append(middle - start)
-            results["opt2"]["dec"].append(end - middle)
+            results["precompute_gnr"]["enc"].append(middle - start)
+            results["precompute_gnr"]["dec"].append(end - middle)
         else:
-            raise ValueError("Opt2: Decrypted is not the same as message")
+            raise ValueError(
+                "precompute_gnr: Decrypted is not the same as message"
+            )
 
 
-def fillTimesOpt3(messages, results):
-    print("Starting Opt3 filling...")
-    ps = opt3.PaillierScheme.constructFromJsonFile(
-        "opt3-2022-01-07_14.47.27.047353.json"
+def fillTimesBoth(messages, results):
+    print("Starting precompute_both filling...")
+    ps = precompute_both_scheme.PaillierScheme.constructFromJsonFile(
+        "both-2022-01-07_14.47.27.047353.json"
     )
-    print("Opt3 loaded")
+    print("precompute_both loaded")
 
     for index, message in enumerate(messages):
-        print(f"Opt3: iteration {index+1} out of {BATCH_SIZE}")
+        print(f"precompute_both: iteration {index+1} out of {BATCH_SIZE}")
         start = timer()
         ct = ps.encrypt(message)
         middle = timer()
@@ -114,10 +124,12 @@ def fillTimesOpt3(messages, results):
         end = timer()
 
         if pt == message:
-            results["opt3"]["enc"].append(middle - start)
-            results["opt3"]["dec"].append(end - middle)
+            results["precompute_both"]["enc"].append(middle - start)
+            results["precompute_both"]["dec"].append(end - middle)
         else:
-            raise ValueError("Opt3: Decrypted is not the same as message")
+            raise ValueError(
+                "precompute_both: Decrypted is not the same as message"
+            )
 
 
 if __name__ == "__main__":
@@ -134,16 +146,16 @@ if __name__ == "__main__":
         "default_keysize": DEFAULT_KEYSIZE,
         "scheme1": {"enc": [], "dec": []},
         "scheme3": {"enc": [], "dec": []},
-        "opt1": {"enc": [], "dec": []},
-        "opt2": {"enc": [], "dec": []},
-        "opt3": {"enc": [], "dec": []},
+        "precompute_gm": {"enc": [], "dec": []},
+        "precompute_gnr": {"enc": [], "dec": []},
+        "precompute_both": {"enc": [], "dec": []},
     }
 
     fillTimesScheme1(messages, results)
     fillTimesScheme3(messages, results)
-    fillTimesOpt1(messages, results)
-    fillTimesOpt2(messages, results)
-    fillTimesOpt3(messages, results)
+    fillTimesPrecomputeGm(messages, results)
+    fillTimesPrecomputeGnr(messages, results)
+    fillTimesBoth(messages, results)
 
     file_path = os.path.join(
         RESULTS_PATH,

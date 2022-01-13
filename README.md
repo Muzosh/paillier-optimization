@@ -11,9 +11,9 @@
 - `schemes` (dir) - contains different versions of Paillier schemes
     - `common.py` - contains common code for all schemes
     - `config.py` - user can configurate common input values for all schemes (more in the [next chapter](#config))
-    - `opt1.py` - implements chapter *3.2 Computing $g^m mod\ n^2$* from the whitepaper (pre-computing message part) on top of `scheme3.py`
-    - `opt2.py` - implements chapter *3.3 Computing $(g^n)^r mod\ n^2$* from the whitepaper (pre-computing noise part) on top of `scheme3.py`
-    - `opt3.py` - implements combination of both pre-computations from `opt1.py` and `opt2.py` on top of `scheme3.py`
+    - `precompute_gm.py` - implements chapter *3.2 Computing $g^m mod\ n^2$* from the whitepaper (pre-computing message part) on top of `scheme3.py`
+    - `precompute_gnr.py` - implements chapter *3.3 Computing $(g^n)^r mod\ n^2$* from the whitepaper (pre-computing noise part) on top of `scheme3.py`
+    - `precompute_both.py` - implements combination of both pre-computations from `precompute_gm.py` and `precompute_gnr.py` on top of `scheme3.py`
     - `scheme1.py` - imlements original and basic form of Paillier cryptosystem
     - `scheme3.py` - implements Paillier's new variant with faster decryption
 - `measure.py` - generates X random messages and encrypts them with all schemes, then generate file in `results`
@@ -50,7 +50,7 @@ In order to see the results of the performance improvements, one must first run 
 
 Some dummy parameters and values can be found [here](https://vutbr-my.sharepoint.com/:f:/g/personal/xmuzik08_vutbr_cz/EukPH0b5MPBNt6PfriKcKh8Bot8DD1u2x3h2W_bABpMHaQ?e=tZ6q07) (access is for @vutbr.cz only). Download them and put them into `params` project folder.
 
-Please note, that for `opt2.PaillierScheme.constructFileFromJson` YOU CAN USE file computed for `opt3.py` which contain values needed for Opt2 (Opt2 is part of Opt3).
+Please note, that for `precompute_gnr.PaillierScheme.constructFileFromJson` YOU CAN USE file computed for `precompute_both.py` which contain values needed for precompute_gnr (precompute_gnr is part of precompute_both).
 
 ### Plotting
 
