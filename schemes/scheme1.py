@@ -15,10 +15,10 @@ class Public:
 
 
 class Private:
-    def __init__(self, p: int, q: int, gamma: int) -> None:
+    def __init__(self, p: int, q: int, lambd: int) -> None:
         self.p = p
         self.q = q
-        self.gamma = gamma
+        self.lambd = lambd
 
 
 class PaillierScheme:
@@ -36,7 +36,7 @@ class PaillierScheme:
             n_len = n.bit_length()
 
         nsquared = n * n
-        gamma = math.lcm(p - 1, q - 1)
+        lambd = math.lcm(p - 1, q - 1)
 
         # Generate small (performance reasons) g such that g is element of
         # Z*_nsquared and also is order of n (can be checked effectively)
@@ -44,13 +44,13 @@ class PaillierScheme:
         for i in range(2, nsquared):
             if (
                 math.gcd(i, nsquared) == 1
-                and math.gcd(Lfunction(pow(i, gamma, nsquared), n), n) == 1
+                and math.gcd(Lfunction(pow(i, lambd, nsquared), n), n) == 1
             ):
                 g = i
                 break
 
         self.public = Public(n, g, nsquared)
-        self.private = Private(p, q, gamma)
+        self.private = Private(p, q, lambd)
 
     def encrypt(self, message: int) -> int:
         if message >= self.public.n:
@@ -74,11 +74,11 @@ class PaillierScheme:
             raise ValueError("Ciphertext must be less than nsquared")
 
         numerator = Lfunction(
-            pow(ciphertext, self.private.gamma, self.public.nsquared),
+            pow(ciphertext, self.private.lambd, self.public.nsquared),
             self.public.n,
         )
         denominator = Lfunction(
-            pow(self.public.g, self.private.gamma, self.public.nsquared),
+            pow(self.public.g, self.private.lambd, self.public.nsquared),
             self.public.n,
         )
 

@@ -48,7 +48,7 @@ class PaillierScheme:
             p2 = dsa2.p
             n = p1 * p2  # the same as n = p * q
             nsquared = n * n
-            gamma = math.lcm(p1 - 1, p2 - 1)
+            lambd = math.lcm(p1 - 1, p2 - 1)
 
             # Find g of order alpha*n in Z*_nsquared using DCA parameters:
             # 1) find g of order q1*q2*p1*p2 in Z*_p1*p1*p2*p2 using CRT:
@@ -60,8 +60,8 @@ class PaillierScheme:
             g = chinese_remainder([p1 * p1, p2 * p2], [dsa1.g, dsa2.g])
             alpha = dsa1.q * dsa2.q
 
-            # Check if new alpha is divisor of gamma
-            assert gamma % alpha == 0
+            # Check if new alpha is divisor of lambd
+            assert lambd % alpha == 0
 
             # Check if g is the order of alpha*n in Z*_nsquared
             assert pow(g, alpha * n, nsquared) == 1
