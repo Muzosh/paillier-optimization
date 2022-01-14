@@ -29,7 +29,7 @@ In `schemes/config.py` are these values waiting to be configured:
 - `USE_PARALLEL`: bool - determines whether CPU parallelization should be used when pre-computing values (default=True)
 - `POWER`: int - indirectly determines the number of values to be precomputed (default=$2^{16}$)
 - `NO_GNR`: int - determines how many precomputed values of noise should be multiplied together (default=$5$)
-- `CHEAT`: bool - some operations (mainly generation of r) requires knowledge of private key when doing an encryption, this violates principles of public key cryptography (default=True)
+- `CHEAT`: bool - some operations (mainly generation of r) requires knowledge of private key when doing an encryption, this violates principles of public key cryptography (default=False)
     - cheating brings some performance improvements
 
 ## Usage

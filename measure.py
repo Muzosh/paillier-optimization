@@ -63,7 +63,7 @@ def fillTimesScheme3(messages, results):
 def fillTimesPrecomputeGm(messages, results):
     print("Starting precompute_gm filling...")
     ps = precompute_gm_scheme.PaillierScheme.constructFromJsonFile(
-        "gm-2022-01-06_22:16:03.993283.json"
+        "precompute_gm-2022-01-06_22:16:03.993283.json"
     )
     print("precompute_gm loaded")
 
@@ -87,7 +87,7 @@ def fillTimesPrecomputeGm(messages, results):
 def fillTimesPrecomputeGnr(messages, results):
     print("Starting precompute_gnr filling...")
     ps = precompute_gnr_scheme.PaillierScheme.constructFromJsonFile(
-        "both-2022-01-07_14.47.27.047353.json"
+        "precompute_both-2022-01-07_14.47.27.047353.json"
     )
     print("precompute_gnr loaded")
 
@@ -111,7 +111,7 @@ def fillTimesPrecomputeGnr(messages, results):
 def fillTimesBoth(messages, results):
     print("Starting precompute_both filling...")
     ps = precompute_both_scheme.PaillierScheme.constructFromJsonFile(
-        "both-2022-01-07_14.47.27.047353.json"
+        "precompute_both-2022-01-07_14.47.27.047353.json"
     )
     print("precompute_both loaded")
 
