@@ -7,6 +7,7 @@ from timeit import default_timer as timer
 from Cryptodome.Random import random
 
 from schemes import (
+    parallelize,
     precompute_both_scheme,
     precompute_gm_scheme,
     precompute_gnr_scheme,
@@ -132,6 +133,30 @@ def fillTimesBoth(messages, results):
             )
 
 
+def fillTimesParal(messages, results):
+    print("Starting paral filling...")
+    ps = parallelize.PaillierScheme.constructFromJsonFile(
+        "precompute_both-2022-01-07_14.47.27.047353.json"
+    )
+    print("paral loaded")
+
+    for index, message in enumerate(messages):
+        print(f"paral: iteration {index+1} out of {BATCH_SIZE}")
+        start = timer()
+        ct = ps.encrypt(message)
+        middle = timer()
+        pt = ps.decrypt(ct)
+        end = timer()
+
+        if pt == message:
+            results["paral"]["enc"].append(middle - start)
+            results["paral"]["dec"].append(end - middle)
+        else:
+            raise ValueError(
+                "paral: Decrypted is not the same as message"
+            )
+
+
 if __name__ == "__main__":
 
     messages = [
@@ -149,6 +174,7 @@ if __name__ == "__main__":
         "precompute_gm": {"enc": [], "dec": []},
         "precompute_gnr": {"enc": [], "dec": []},
         "precompute_both": {"enc": [], "dec": []},
+        "paral": {"enc": [], "dec": []},
     }
 
     fillTimesScheme1(messages, results)
@@ -156,6 +182,7 @@ if __name__ == "__main__":
     fillTimesPrecomputeGm(messages, results)
     fillTimesPrecomputeGnr(messages, results)
     fillTimesBoth(messages, results)
+    fillTimesParal(messages, results)
 
     file_path = os.path.join(
         RESULTS_PATH,
