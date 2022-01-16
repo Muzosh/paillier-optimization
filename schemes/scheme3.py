@@ -73,7 +73,7 @@ class PaillierScheme:
 
         gnr = pow(
             self.public.g,
-            (self.public.n * r) % self.public.n,
+            self.public.n * r,
             self.public.nsquared,
         )
 
