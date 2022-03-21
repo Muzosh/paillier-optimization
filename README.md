@@ -1,4 +1,4 @@
-# MOK project - Petr Muzikant
+# Paillier cryptosystem optimizations implementation
 
 > this project implements *Encryption Performance Improvements of the Paillier Cryptosystem* by Christine Jost, Ha Lam, Alexander Maximov and Ben Smeets
 >
